@@ -1,6 +1,9 @@
 const fs = require('fs');
 const AdmZip = require('adm-zip');
 const mammoth = require('mammoth');
+const folderDocx = 'docx_decrypted/';
+const folderHtml = 'Html/';
+
 
 async function processDocx(file) {
   // Extract docx to a temporary folder
@@ -19,16 +22,16 @@ async function processDocx(file) {
   let document = fs.readFileSync(documentXml, 'utf8');
   document = document.replace(/<w:p[\s\S]*?<w:pict[\s\S]*?<\/w:p>/g, '');
   fs.writeFileSync(documentXml, document);
-  //const tempArchFolder = 'decrypt/';
+
   // Repack and save as decrypted docx
   zip.addLocalFile(settingsXml);
   zip.addLocalFile(documentXml);
-  zip.writeZip('docx') + file.replace('docx', '');
+  zip.writeZip(folderDocx.replace('/', '')) + file.replace(folderDocx, '');
   //zip.writeZip('tempArchFolder' + file.replace('.docx', '_decrypted.docx'));
 
   // Convert to HTML and apply custom styles
   const result = await mammoth.convertToHtml({
-    path: 'docx' + file.replace('docx', ''),
+    path: folderDocx + file.replace(folderDocx, ''),
     styleMap: [
       {
         match: 'p[style-name="Заголовок 1"]',
@@ -45,42 +48,33 @@ async function processDocx(file) {
     ]
   });
   // Save HTML to html folder
-  fs.writeFileSync('html/' + file.replace('.docx', '').replace('docx/', '') + '.html', result.value);
-  fs.rmSync(tempFolder, {recursive: true});
-    //fs.rmSync('decrypt/docx_decrypted', {recursive: true});
+  fs.writeFileSync(folderHtml + file.replace(folderDocx, '').replace('.docx', '') + '.html', result.value);
+  fs.rmSync(tempFolder, {recursive: true})
   
+  
+    if(fs.existsSync(tempFolder)){fs.rmdirSync(tempFolder, {recursive: true});}
+    
 }
+if(!fs.existsSync(folderDocx)){fs.mkdirSync(folderDocx);}
+if(!fs.existsSync(folderHtml)){fs.mkdirSync(folderHtml);}
+//if(!fs.existsSync('decrypt/')){fs.mkdirSync('decrypt/');}
 
-if(!fs.existsSync('docx/')){fs.mkdirSync('docx/');}
-if(!fs.existsSync('html/')){fs.mkdirSync('html/');}
-if(!fs.existsSync('decrypt/')){fs.mkdirSync('decrypt/');}
-// Uncomment this if userinput is required.
-/*
   const readline = require('readline').createInterface({
   input: process.stdin,
   output: process.stdout
 });
-readline.question("Enter the name of the zip archive: ", (zipFileName) => {
-  readline.close();
-  const zip = new AdmZip(zipFileName);
-  // Also add }); to the end of the script
-  */
-
-  const zip = new AdmZip('docx.zip') 
+readline.question("Enter the name of the zip archive: ", (zipFileName) => {readline.close();
 
   // Extracting files to a directory
-  // You can create a global variable
-  // with the path in it and change the code a little.
-  // const FolderPath = 'SamplePath/';
-  zip.extractAllTo("docx/", /*overwrite*/true);
+  const zip = new AdmZip(zipFileName);
+  zip.extractAllTo(folderDocx, /*overwrite*/true);
 
   // Process all docx files in the folder
-  const folder = 'docx/';
-  const files = fs.readdirSync(folder);
-  files.forEach(file => {
-    if (file.endsWith('.docx')) {
-      processDocx(folder + file);
-    }});
-  
-
-    
+  const files = fs.readdirSync(folderDocx);
+  files.forEach(file => {if (file.endsWith('.docx')) {
+    console.log(`Processing file: ${file}`);
+    processDocx(folderDocx + file);
+    console.log(`Finished processing ${file}`);
+  }
+});
+}); 
