@@ -8,7 +8,7 @@ const folderHtml = 'Html/';
 async function processDocx(file) {
   // Extract docx to a temporary folder
   const zip = new AdmZip(file);
-  const tempFolder = 'temp_' + file;
+  const tempFolder = 'temp_';
   zip.extractAllTo(tempFolder, true);
   
   // Remove w:documentProtection from settings.xml
@@ -33,27 +33,15 @@ async function processDocx(file) {
   const result = await mammoth.convertToHtml({
     path: folderDocx + file.replace(folderDocx, ''),
     styleMap: [
-      {
-        match: 'p[style-name="Заголовок 1"]',
-        tag: 'h2'
-      },
-      {
-        match: 'p[style-name="Заголовок 2"]',
-        tag: 'h3'
-      },
-      {
-        match: 'span[style-name="consolas"]',
-        tag: 'pre'
-      }
-    ]
-  });
+      {match: 'p[style-name="Заголовок 1"]', tag: 'h2'},
+      {match: 'p[style-name="Заголовок 2"]', tag: 'h3'},
+      {match: 'span[style-name="consolas"]', tag: 'pre'}]});
+
   // Save HTML to html folder
   fs.writeFileSync(folderHtml + file.replace(folderDocx, '').replace('.docx', '') + '.html', result.value);
   fs.rmSync(tempFolder, {recursive: true})
-  
-  
-    if(fs.existsSync(tempFolder)){fs.rmdirSync(tempFolder, {recursive: true});}
-    
+  if(fs.existsSync(tempFolder)){fs.rmdirSync(tempFolder, {recursive: true});}
+ 
 }
 if(!fs.existsSync(folderDocx)){fs.mkdirSync(folderDocx);}
 if(!fs.existsSync(folderHtml)){fs.mkdirSync(folderHtml);}
