@@ -4,6 +4,27 @@ const mammoth = require('mammoth');
 const folderDocx = 'docx_decrypted/';
 const folderHtml = 'Html/';
 
+async function DocxExtraction(){
+  const readline = require('readline').createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  readline.question("Enter the name of the zip archive: ", (zipFileName) => {readline.close();
+    // Extracting files to a directory   
+    //const zip = new AdmZip('example.zip');
+    const zip = new AdmZip(zipFileName);
+    zip.extractAllTo(folderDocx, /*overwrite*/true);
+  
+    // Process all docx files in the folder
+    const files = fs.readdirSync(folderDocx);
+    files.forEach(file => {if (file.endsWith('.docx')) {
+      console.log(`Processing file: ${file}`);
+      processDocx(folderDocx + file);
+      console.log(`Finished processing ${file}`);
+    }
+  });
+  }); 
+}
 
 async function processDocx(file) {
   // Extract docx to a temporary folder
@@ -27,7 +48,7 @@ async function processDocx(file) {
   zip.addLocalFile(settingsXml);
   zip.addLocalFile(documentXml);
   zip.writeZip(folderDocx.replace('/', '')) + file.replace(folderDocx, '');
-  //zip.writeZip('tempArchFolder' + file.replace('.docx', '_decrypted.docx'));
+  //zip.writeZip(folderDocx.replace('/', '')) + file.replace(folderDocx, '') + file.replace('.docx', '_decrypted.docx');
 
   // Convert to HTML and apply custom styles
   const result = await mammoth.convertToHtml({
@@ -43,26 +64,10 @@ async function processDocx(file) {
   if(fs.existsSync(tempFolder)){fs.rmdirSync(tempFolder, {recursive: true});}
  
 }
+
+//Theoretical int main(){}
+
 if(!fs.existsSync(folderDocx)){fs.mkdirSync(folderDocx);}
 if(!fs.existsSync(folderHtml)){fs.mkdirSync(folderHtml);}
-//if(!fs.existsSync('decrypt/')){fs.mkdirSync('decrypt/');}
 
-  const readline = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-readline.question("Enter the name of the zip archive: ", (zipFileName) => {readline.close();
-
-  // Extracting files to a directory
-  const zip = new AdmZip(zipFileName);
-  zip.extractAllTo(folderDocx, /*overwrite*/true);
-
-  // Process all docx files in the folder
-  const files = fs.readdirSync(folderDocx);
-  files.forEach(file => {if (file.endsWith('.docx')) {
-    console.log(`Processing file: ${file}`);
-    processDocx(folderDocx + file);
-    console.log(`Finished processing ${file}`);
-  }
-});
-}); 
+DocxExtraction()
